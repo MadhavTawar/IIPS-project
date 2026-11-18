@@ -26,6 +26,10 @@ Built as the running prototype for the IC 912 B (OOAD Lab) project
 - **Abusive-comment moderation**: profanity/personal-insult detector routes
   flagged comments to an Admin approve/reject queue, kept separate from
   ordinary negative sentiment.
+- **Atomic feedback submission**: the submission log, feedback record and
+  ratings are committed together and rolled back together if any step fails.
+- **Published-only analytics**: dashboards, alerts and exports exclude
+  feedback that has not been approved for publication.
 - **Faculty dashboard**: avg rating, sentiment split, per-aspect ratings,
   filterable anonymous comment feed.
 - **HOD department dashboard**: filter by semester/course/faculty/aspect,
@@ -33,9 +37,13 @@ Built as the running prototype for the IC 912 B (OOAD Lab) project
 - **Alerts**: auto-raised when a course's negative-sentiment share or average
   rating crosses a configurable threshold.
 - **PDF and CSV report export** for Faculty and HOD (reportlab + stdlib csv).
-- **Responsive UI** (works down to phone width), Chart.js visualizations.
-- **25 automated tests** covering the SDD test plan (duplicate submission,
-  sentiment labels, access control, cycle-closed, privacy, alert threshold).
+- **Hardened exports**: PDF text is escaped and CSV formula-injection values are
+  neutralized before download.
+- **Responsive UI redesign** (works down to phone width), with shared
+  components and Chart.js visualizations.
+- **31 automated tests** covering the SDD test plan and regression cases
+  (duplicate submission, sentiment labels, access control, cycle-closed,
+  privacy, alert threshold and export behavior).
 
 ## Architecture
 
@@ -68,6 +76,8 @@ Jinja templates / dataclass entities).
 
 Python 3.12, Flask 3, SQLite, vaderSentiment (open-source, no paid APIs),
 reportlab (PDF), Chart.js (CDN), plain HTML/CSS/JS with Jinja templates.
+Configuration is loaded from `.env` without requiring an additional dotenv
+package.
 
 ## Project structure
 
@@ -124,7 +134,7 @@ flask init-db
 # 5. Load demo/seed data
 python seed.py
 
-# 6. Run the app
+# 6. Run the app (debug mode is off unless FLASK_DEBUG=1)
 python run.py
 # or: flask run
 ```
@@ -169,7 +179,7 @@ Per the requirements document's strict anonymity rule:
   joined against `feedback`, `ratings`, or `sentiment_results` by any query
   in the codebase (see `app/repository/feedback_repo.py`).
 - Dashboards, analytics, CSV/PDF exports select only aggregated numbers and
-  anonymous comment text — verified by automated tests
+  published feedback and anonymous comment text — verified by automated tests
   (`tests/test_privacy.py`).
 
 ## Accuracy note
